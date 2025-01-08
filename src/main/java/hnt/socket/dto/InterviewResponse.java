@@ -14,4 +14,6 @@ public class InterviewResponse {
     private String toTime;
     private String location;
     private String meetingId;
+    private String jobTitle;
+    private String candidateEmail;
 }

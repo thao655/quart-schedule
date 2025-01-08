@@ -3,12 +3,14 @@ package hnt.socket.config.quartz;
 import hnt.socket.dto.InterviewerResponse;
 import hnt.socket.service.InterviewService;
 import hnt.socket.service.NotificationService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,7 +27,12 @@ public class InterviewCheckJob implements Job {
     public void execute(JobExecutionContext context) {
         System.out.println("Quartz Job Started: Checking interviews for tomorrow...");
 
-        List<InterviewerResponse> interviewers = interviewService.getInterviewsForTomorrow();
+        List<InterviewerResponse> interviewers = null;
+        try {
+            interviewers = interviewService.getInterviewsForTomorrow();
+        } catch (MessagingException | IOException e) {
+            throw new RuntimeException(e);
+        }
         log.info("Interviewers: " + interviewers);
         for (InterviewerResponse interviewer : interviewers) {
             try {
@@ -34,6 +41,7 @@ public class InterviewCheckJob implements Job {
                         "Interviews for " + LocalDate.now() + 1,
                         interviewer.getInterviews()
                 );
+
             } catch (Exception e) {
                 log.info("Error with JobExecutionContext: " + e.getMessage());
             }

@@ -2,7 +2,9 @@ package hnt.socket.entity;
 
 import hnt.socket.common.InterviewStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -11,6 +13,8 @@ import java.util.Set;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Interview {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +25,9 @@ public class Interview {
     private String meetingId;
     private String location;
 
+    @ManyToOne
+    private Candidate candidate;
+
     @ManyToMany
     @JoinTable(name = "interview_interviewers",
             joinColumns = @JoinColumn(name = "interview_id"),
@@ -28,4 +35,7 @@ public class Interview {
     private Set<User> interviewers = new HashSet<>();
     @Enumerated(EnumType.STRING)
     private InterviewStatus status;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Job job;
 }

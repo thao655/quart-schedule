@@ -52,6 +52,9 @@ public class NotificationService{
 
                 tableContent.append("<tr>")
                         .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                        .append(interview.getJobTitle())
+                        .append("</td>")
+                        .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
                         .append(interview.getInterviewDate())
                         .append("</td>")
                         .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
@@ -63,12 +66,55 @@ public class NotificationService{
                         .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
                         .append(interview.getMeetingId())
                         .append("</td>")
-                        .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
-                        .append("<a href='http://localhost:5173/interview/").append(interview.getId()).append("' >Link</a>")
-                        .append("</td>")
                         .append("</tr>");
 
         }
+
+        htmlTemplate = htmlTemplate.replace("{{tableContent}}", tableContent.toString());
+
+        helper.setText(htmlTemplate, true);
+
+        javaMailSender.send(msg);
+    }
+
+    @Async
+    @Transactional
+    public void sendHTMLCandidate(String to, String subject, InterviewResponse interview) throws MessagingException, IOException {
+        log.info("Sending HTML message: " + interview);
+        MimeMessage msg = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+
+        String htmlTemplate = new String(Files.readAllBytes(Paths.get(new ClassPathResource("templates/notification-mail.html").getURI())));
+
+
+        StringBuilder tableContent = new StringBuilder();
+            Interview interviewUpdate = interviewRepository.findById(interview.getId()).orElseThrow();
+            if (interviewUpdate.getStatus() == InterviewStatus.NEW) {
+                interviewUpdate.setStatus(InterviewStatus.INVITED);
+                interviewRepository.save(interviewUpdate);
+            }
+
+
+        tableContent.append("<tr>")
+                .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                .append(interview.getJobTitle())
+                .append("</td>")
+                .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                .append(interview.getInterviewDate())
+                .append("</td>")
+                .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                .append(interview.getFromTime()).append(" - ").append(interview.getToTime())
+                .append("</td>")
+                .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                .append(interview.getLocation())
+                .append("</td>")
+                .append("<td style='padding:10px;border:1px solid #ddd;text-align:center;'>")
+                .append(interview.getMeetingId())
+                .append("</td>")
+                .append("</tr>");
 
         htmlTemplate = htmlTemplate.replace("{{tableContent}}", tableContent.toString());
 

@@ -6,11 +6,13 @@ import hnt.socket.dto.InterviewerResponse;
 import hnt.socket.entity.Interview;
 import hnt.socket.entity.User;
 import hnt.socket.repository.InterviewRepository;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,9 +24,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class InterviewService {
     private final InterviewRepository interviewRepository;
+    private final NotificationService notificationService;
 
     @Transactional
-    public List<InterviewerResponse> getInterviewsForTomorrow() {
+    public List<InterviewerResponse> getInterviewsForTomorrow() throws MessagingException, IOException {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         log.info("Getting interviews for tomorrow: " + tomorrow);
 
@@ -45,6 +48,7 @@ public class InterviewService {
                             newResponse.setInterviewer(interviewer.getFullName());
                             newResponse.setEmail(interviewer.getEmail());
                             newResponse.setInterviews(new ArrayList<>());
+
                             return newResponse;
                         }
                 );
@@ -55,8 +59,16 @@ public class InterviewService {
                     interview.getFromTime().toString(),
                     interview.getToTime().toString(),
                     interview.getLocation(),
-                    interview.getMeetingId());
+                    interview.getMeetingId(),
+                    interview.getJob().getTitle(),
+                    interview.getCandidate().getEmail());
 
+
+                notificationService.sendHTMLCandidate(
+                        interviewResponse.getCandidateEmail(),
+                        "Candidate for " + LocalDate.now() + 1,
+                        interviewResponse
+                );
                 response.getInterviews().add(interviewResponse);
             }
         }
